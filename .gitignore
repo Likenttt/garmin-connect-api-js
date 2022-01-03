@@ -26,3 +26,4 @@ garmin.config.json
 
 # tests
 test
+src/garmin/lab.js

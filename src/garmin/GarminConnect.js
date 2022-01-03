@@ -41,9 +41,14 @@ class GarminConnect {
      * Login to Garmin Connect
      * @param username
      * @param password
+     * @param domain The top domain of GC_MODERN,
+     * only com(For the global, default) and cn(For China Mainland) are valid
      * @returns {Promise<*>}
      */
-    async login(username, password) {
+    async login(username, password, domain = 'com') {
+        if (domain && !['com', 'cn'].includes(domain)) {
+            throw 'Only com and cn are valid for the parameter domain';
+        }
         let tempCredentials = { ...credentials };
         if (username && password) {
             tempCredentials = { ...credentials, username, password };

@@ -20,10 +20,12 @@ class CFClient {
         this.headers = headers || {};
     }
 
-    async scraper(options) {
+    async scraper(options, domain) {
+        const newOptions = Object.create(options);
+        newOptions.uri = urls.convertUrl(domain, options.uri);
         return new Promise((resolve) => {
             this.cloudscraper(
-                options,
+                newOptions,
                 (err, res) => {
                     resolve(res);
                 },
@@ -32,37 +34,34 @@ class CFClient {
     }
 
     async get(url, domain, data) {
-        const finalUrl = urls.convertUrl(domain, url);
         const queryData = this.queryString.stringify(data);
         const queryDataString = queryData ? `?${queryData}` : '';
         const options = {
             method: 'GET',
             jar: this.cookies,
-            uri: `${finalUrl}${queryDataString}`,
+            uri: `${url}${queryDataString}`,
             headers: this.headers,
         };
-        const { body } = await this.scraper(options);
+        const { body } = await this.scraper(options, domain);
         return asJson(body);
     }
 
     async post(url, domain, data) {
-        const finalUrl = urls.convertUrl(domain, url);
         const options = {
             method: 'POST',
-            uri: finalUrl,
+            uri: url,
             jar: this.cookies,
             formData: data,
             headers: this.headers,
         };
-        const { body } = await this.scraper(options);
+        const { body } = await this.scraper(options, domain);
         return asJson(body);
     }
 
     async postJson(url, domain, data, params, headers) {
-        const finalUrl = urls.convertUrl(domain, url);
         const options = {
             method: 'POST',
-            uri: finalUrl,
+            uri: url,
             jar: this.cookies,
             json: data,
             headers: {
@@ -71,15 +70,14 @@ class CFClient {
                 'Content-Type': 'application/json',
             },
         };
-        const { body } = await this.scraper(options);
+        const { body } = await this.scraper(options, domain);
         return asJson(body);
     }
 
     async putJson(url, domain, data) {
-        const finalUrl = urls.convertUrl(domain, url);
         const options = {
             method: 'PUT',
-            uri: finalUrl,
+            uri: url,
             jar: this.cookies,
             json: data,
             headers: {
@@ -87,7 +85,7 @@ class CFClient {
                 'Content-Type': 'application/json',
             },
         };
-        const { body } = await this.scraper(options);
+        const { body } = await this.scraper(options, domain);
         return asJson(body);
     }
 }

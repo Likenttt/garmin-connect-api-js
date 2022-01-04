@@ -35,6 +35,7 @@ class GarminConnect {
         };
         this.client = new CFClient(headers);
         this.userHash = undefined;
+        this.domain = 'com';
     }
 
     /**
@@ -42,19 +43,20 @@ class GarminConnect {
      * @param username
      * @param password
      * @param domain The top domain of GC_MODERN,
-     * only com(For the global, default) and cn(For China Mainland) are valid
+     * only com(For the global, default) and cn(For China Mainland) are allowed
      * @returns {Promise<*>}
      */
     async login(username, password, domain = 'com') {
         if (domain && !['com', 'cn'].includes(domain)) {
-            throw 'Only com and cn are valid for the parameter domain';
+            throw new Error('Only com and cn are valid for the parameter domain');
         }
+        this.domain = domain;
         let tempCredentials = { ...credentials };
         if (username && password) {
             tempCredentials = { ...credentials, username, password };
         }
-        await this.client.get(urls.SIGNIN_URL);
-        await this.client.post(urls.SIGNIN_URL, tempCredentials);
+        await this.get(urls.SIGNIN_URL);
+        await this.post(urls.SIGNIN_URL, tempCredentials);
         const userPreferences = await this.getUserInfo();
         const { displayName } = userPreferences;
         this.userHash = displayName;
@@ -337,15 +339,15 @@ class GarminConnect {
     // General methods
 
     async get(url, data) {
-        return this.client.get(url, data);
+        return this.client.get(url, this.domain, data);
     }
 
     async post(url, data) {
-        return this.client.postJson(url, data);
+        return this.client.postJson(url, this.domain, data);
     }
 
     async put(url, data) {
-        return this.client.putJson(url, data);
+        return this.client.putJson(url, this.domain, data);
     }
 }
 

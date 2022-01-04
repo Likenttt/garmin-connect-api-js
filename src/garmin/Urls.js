@@ -60,6 +60,16 @@ const newsFeed = () => `${ACTIVITYLIST_SERVICE}/activities/subscriptionFeed`;
 
 const upload = (format) => `${UPLOAD_SERVICE}/upload/${format}`;
 
+function convertUrl(domain, url) {
+    if (domain && !['com', 'cn'].includes(domain)) {
+        throw new Error('Only com and cn are valid for the parameter domain');
+    }
+    if (domain === 'cn') {
+        return url.replace(/garmin.com/g, 'garmin.cn');
+    }
+    return url;
+}
+
 module.exports = {
     GC_MODERN,
     GARMIN_SSO_ORIGIN,
@@ -90,4 +100,5 @@ module.exports = {
     socialConnections,
     newsFeed,
     upload,
+    convertUrl,
 };

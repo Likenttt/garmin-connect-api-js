@@ -1,11 +1,11 @@
 const cloudscraper = require('cloudscraper');
 const qs = require('qs');
 const request = require('request');
+const urls = require('../garmin/Urls');
 
 const asJson = (body) => {
     try {
-        const jsonBody = JSON.parse(body);
-        return jsonBody;
+        return JSON.parse(body);
     } catch (e) {
         // Do nothing
     }
@@ -31,23 +31,25 @@ class CFClient {
         });
     }
 
-    async get(url, data) {
+    async get(url, domain, data) {
+        const finalUrl = urls.convertUrl(domain, url);
         const queryData = this.queryString.stringify(data);
         const queryDataString = queryData ? `?${queryData}` : '';
         const options = {
             method: 'GET',
             jar: this.cookies,
-            uri: `${url}${queryDataString}`,
+            uri: `${finalUrl}${queryDataString}`,
             headers: this.headers,
         };
         const { body } = await this.scraper(options);
         return asJson(body);
     }
 
-    async post(url, data) {
+    async post(url, domain, data) {
+        const finalUrl = urls.convertUrl(domain, url);
         const options = {
             method: 'POST',
-            uri: url,
+            uri: finalUrl,
             jar: this.cookies,
             formData: data,
             headers: this.headers,
@@ -56,10 +58,11 @@ class CFClient {
         return asJson(body);
     }
 
-    async postJson(url, data, params, headers) {
+    async postJson(url, domain, data, params, headers) {
+        const finalUrl = urls.convertUrl(domain, url);
         const options = {
             method: 'POST',
-            uri: url,
+            uri: finalUrl,
             jar: this.cookies,
             json: data,
             headers: {
@@ -72,10 +75,11 @@ class CFClient {
         return asJson(body);
     }
 
-    async putJson(url, data) {
+    async putJson(url, domain, data) {
+        const finalUrl = urls.convertUrl(domain, url);
         const options = {
             method: 'PUT',
-            uri: url,
+            uri: finalUrl,
             jar: this.cookies,
             json: data,
             headers: {

@@ -4,11 +4,12 @@
 A powerful JavaScript library for connecting to Garmin Connect for sending and receiving health and workout data. It comes with some predefined methods to get and set different kinds of data for your Garmin account, but also have the possibility to make [custom requests](#custom-requests) `GET`, `POST` and `PUT` are currently supported. This makes it easy to implement whatever may be missing to suite your needs.
 
 ## Prerequisites
-This library will require you to add a configuration file to your project root called `garmin.config.json` containing your username and password for the Garmin Connect service.
+This library will require you to add a configuration file to your project root called `garmin.config.json` containing your username ,password and the top domain(Only com and cn is valid and com is the default top domain) for the Garmin Connect service.
 ```json
 {
 	"username": "my.email@example.com",
-	"password": "MySecretPassword" 
+	"password": "MySecretPassword",
+    "domain": "com"
 }
 ```
 ## How to install
@@ -16,6 +17,8 @@ This library will require you to add a configuration file to your project root c
 $ npm install garmin-connect
 ```
 ## How to use
+
+### For Gamin Global
 ```js
 const { GarminConnect } = require('garmin-connect');
 // Create a new Garmin Connect Client
@@ -24,6 +27,16 @@ const GCClient = new GarminConnect();
 await GCClient.login('my.email@example.com', 'MySecretPassword');
 const userInfo = await GCClient.getUserInfo();
 ```
+### For Garmin China Mainland 佳明中国大陆
+```js
+const { GarminConnect } = require('garmin-connect');
+// Create a new Garmin Connect Client
+const GCClient = new GarminConnect();
+// Uses credentials from garmin.config.json or uses supplied params
+await GCClient.login('my.email@example.com', 'MySecretPassword', 'cn');
+const userInfo = await GCClient.getUserInfo();
+```
+
 Now you can check `userInfo.emailAddress` to verify that your login was successful.
 
 ## Reading data

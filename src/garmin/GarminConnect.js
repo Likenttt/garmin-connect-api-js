@@ -19,11 +19,13 @@ const urls = require('./Urls');
 const {
     username: configUsername,
     password: configPassword,
+    domain: configDomain,
 } = config;
 
 const credentials = {
     username: configUsername,
     password: configPassword,
+    domain: configDomain,
     embed: 'false',
 };
 

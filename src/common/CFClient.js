@@ -23,6 +23,7 @@ class CFClient {
     async scraper(options, domain) {
         const newOptions = Object.create(options);
         newOptions.uri = urls.convertUrl(domain, options.uri);
+        newOptions.headers.origin = urls.convertUrl(domain, newOptions.headers.origin);
         return new Promise((resolve) => {
             this.cloudscraper(
                 newOptions,

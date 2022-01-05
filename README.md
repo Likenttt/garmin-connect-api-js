@@ -18,7 +18,7 @@ $ npm install garmin-connect
 ```
 ## How to use
 
-### For Gamin Global
+### Gamin Global
 ```js
 const { GarminConnect } = require('garmin-connect');
 // Create a new Garmin Connect Client
@@ -27,7 +27,7 @@ const GCClient = new GarminConnect();
 await GCClient.login('my.email@example.com', 'MySecretPassword');
 const userInfo = await GCClient.getUserInfo();
 ```
-### For Garmin China Mainland 佳明中国大陆
+### Garmin China Mainland 佳明中国大陆
 ```js
 const { GarminConnect } = require('garmin-connect');
 // Create a new Garmin Connect Client
@@ -38,6 +38,16 @@ const userInfo = await GCClient.getUserInfo();
 ```
 
 Now you can check `userInfo.emailAddress` to verify that your login was successful.
+
+## Reusing your session
+After a successful login the ```sessionJson``` getter and setter can be used to export and restore your session.
+```js
+// Exporting the session
+const session = GCClient.sessionJson;
+// Use this instead of GCClient.login() to import the session;
+GCClient.sessionJson = session;
+```
+The exported session should be serializable and can be stored as a JSON string.
 
 ## Reading data
 ### User info

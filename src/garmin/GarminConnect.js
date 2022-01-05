@@ -40,6 +40,22 @@ class GarminConnect {
         this.domain = 'com';
     }
 
+    get sessionJson() {
+        const cookies = this.client.serializeCookies();
+        return { cookies, userHash: this.userHash };
+    }
+
+    set sessionJson(json) {
+        const {
+            cookies,
+            userHash,
+        } = json || {};
+        if (cookies && userHash) {
+            this.userHash = userHash;
+            this.client.importCookies(cookies);
+        }
+    }
+
     /**
      * Login to Garmin Connect
      * @param username
@@ -53,9 +69,11 @@ class GarminConnect {
             throw new Error('Only com and cn are valid for the parameter domain');
         }
         this.domain = domain;
-        let tempCredentials = { ...credentials };
+        let tempCredentials = { ...credentials, rememberme: 'on' };
         if (username && password) {
-            tempCredentials = { ...credentials, username, password };
+            tempCredentials = {
+                ...credentials, username, password, rememberme: 'on',
+            };
         }
         await this.get(urls.SIGNIN_URL);
         await this.post(urls.SIGNIN_URL, tempCredentials);

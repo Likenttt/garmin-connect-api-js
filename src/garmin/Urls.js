@@ -60,6 +60,14 @@ const newsFeed = () => `${ACTIVITYLIST_SERVICE}/activities/subscriptionFeed`;
 
 const upload = (format) => `${UPLOAD_SERVICE}/upload/${format}`;
 
+/**
+ *
+ * @param id {string}
+ * @param type "tcx" | "gpx"
+ * @return {`${string}/export/${string}/activity/${string}`}
+ */
+const exportFile = (id, type) => `${DOWNLOAD_SERVICE}/export/${type}/activity/${id}`;
+
 function convertUrl(domain, url) {
     if (domain && !['com', 'cn'].includes(domain)) {
         throw new Error('Only com and cn are valid for the parameter domain');
@@ -101,4 +109,5 @@ module.exports = {
     newsFeed,
     upload,
     convertUrl,
+    exportFile,
 };

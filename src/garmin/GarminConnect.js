@@ -261,19 +261,20 @@ class GarminConnect {
     /**
      * Download original activity data to disk as zip
      * Resolves to absolute path for the downloaded file
-     * @param activity
+     * @param activity : any
      * @param dir Will default to current working directory
+     * @param type : string - Will default to zip
      * @returns {Promise<*>}
      */
-    async downloadOriginalActivityData(activity, dir) {
-        throw new Error('downloadOriginalActivityData method is disabled in this version');
-        /*
+    async downloadOriginalActivityData(activity, dir, type = '') {
         const { activityId } = activity || {};
         if (activityId) {
-            return this.client.downloadBlob(dir, urls.originalFile(activityId));
+            const url = type === '' || type === 'zip'
+                ? urls.originalFile(activityId)
+                : urls.exportFile(activityId, type);
+            return this.client.downloadBlob(dir, url);
         }
         return Promise.reject();
-         */
     }
 
     /**
@@ -297,7 +298,7 @@ class GarminConnect {
     }
 
     /**
-     * Adds a running workout with one step of completeing a set distance.
+     * Adds a running workout with one step of completing a set distance.
      * @param name
      * @param meters
      * @param description

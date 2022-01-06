@@ -8,8 +8,8 @@ This library will require you to add a configuration file to your project root c
 ```json
 {
 	"username": "my.email@example.com",
-	"password": "MySecretPassword",
-    "domain": "com"
+	"password": "MySecretPassword",   
+        "domain": "com"
 }
 ```
 ## How to install

@@ -57,13 +57,13 @@ class GarminConnect {
         }
     }
 
-    credentials() {
+    async credentials() {
         return {
             username: configUsername,
             password: configPassword,
             domain: configDomain,
             embed: 'false',
-            _csrf: this.getCsrfToken(),
+            _csrf: await this.getCsrfToken(),
         };
     }
 
@@ -72,9 +72,13 @@ class GarminConnect {
      * @param username
      * @param password
      * @returns {Promise<*>}
+     * Other useful references:
+     * https://github.com/cpfair/tapiriik/blob/master/tapiriik/services/GarminConnect/garminconnect.py
+     * https://forums.garmin.com/showthread.php?72150-connect-garmin-com-signin-question/page2
+     *
      */
     async login(username, password) {
-        const myCredentials = this.credentials();
+        const myCredentials = await this.credentials();
         let tempCredentials = { ...myCredentials, rememberme: 'on' };
         if (username && password) {
             tempCredentials = {
@@ -105,8 +109,8 @@ class GarminConnect {
     async getCsrfToken() {
         const authResp = await this.get(urls.LOGIN_URL, this.getAuthParams());
         const re = /<input type="hidden" name="_csrf" value="(\w+)"/;
-        const csrfToken = authResp.content.match(re);
-        return csrfToken[0];
+        const csrfToken = authResp.match(re);
+        return csrfToken[1];
     }
 
     // User info

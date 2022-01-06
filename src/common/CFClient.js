@@ -105,6 +105,14 @@ class CFClient {
         return asJson(body);
     }
 
+    /**
+     * @param url
+     * @param data
+     * @param params are the URL parameters to be sent with the request
+     * Must be a plain object or a URLSearchParams object
+     * @param headers
+     * @returns {Promise<void>}
+     */
     async postJson(url, data, params, headers) {
         const options = {
             method: 'POST',

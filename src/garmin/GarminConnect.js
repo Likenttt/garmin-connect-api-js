@@ -79,7 +79,7 @@ class GarminConnect {
         }
         this.csrf = this.getCsrfToken();
         await this.get(urls.SIGNIN_URL);
-        await this.post(urls.SIGNIN_URL, tempCredentials);
+        await this.postSimple(urls.SIGNIN_URL, tempCredentials);
         const userPreferences = await this.getUserInfo();
         const { displayName } = userPreferences;
         this.userHash = displayName;
@@ -246,7 +246,7 @@ class GarminConnect {
         const { activityId } = activity || {};
         if (activityId) {
             const headers = { 'x-http-method-override': 'DELETE' };
-            return this.client.postJson(urls.activity(activityId), undefined, undefined, headers);
+            return this.post(urls.activity(activityId), undefined, undefined, headers);
         }
         return Promise.reject();
     }
@@ -348,7 +348,7 @@ class GarminConnect {
             if (!data.description) {
                 data.description = 'Added by garmin-connect for Node.js';
             }
-            return this.post(urls.workout(), data);
+            return this.postSimple(urls.workout(), data);
         }
         return Promise.reject();
     }
@@ -363,7 +363,7 @@ class GarminConnect {
         const { workoutId } = workout || {};
         if (workoutId && date) {
             const dateString = toDateString(date);
-            return this.post(urls.schedule(workoutId), { date: dateString });
+            return this.postSimple(urls.schedule(workoutId), { date: dateString });
         }
         return Promise.reject();
     }
@@ -377,7 +377,7 @@ class GarminConnect {
         const { workoutId } = workout || {};
         if (workoutId) {
             const headers = { 'x-http-method-override': 'DELETE' };
-            return this.client.postJson(urls.workout(workoutId), undefined, undefined, headers);
+            return this.post(urls.workout(workoutId), undefined, undefined, headers);
         }
         return Promise.reject();
     }
@@ -385,16 +385,26 @@ class GarminConnect {
     // General methods
     // uri will be converted to the corresponding domain later.
     // please ensure the domains in the data are converted
+    // !!!! Don't access the post/get/put interfaces in the CFCClient,
+    // just through these capsuled methods
     async get(url, data) {
-        return this.client.get(url, this.domain, data);
+        const replacedUrl = urls.convertUrl(this.domain, url);
+        return this.client.get(replacedUrl, data);
     }
 
-    async post(url, data) {
-        return this.client.postJson(url, this.domain, data);
+    async post(url, data, params, headers) {
+        const replacedUrl = urls.convertUrl(this.domain, url);
+        return this.client.postJson(replacedUrl, data, params, headers);
+    }
+
+    async postSimple(url, data) {
+        const replacedUrl = urls.convertUrl(this.domain, url);
+        return this.client.postJson(replacedUrl, data, undefined, undefined);
     }
 
     async put(url, data) {
-        return this.client.putJson(url, this.domain, data);
+        const replacedUrl = urls.convertUrl(this.domain, url);
+        return this.client.putJson(replacedUrl, data);
     }
 }
 

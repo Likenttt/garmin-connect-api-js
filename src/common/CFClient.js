@@ -3,7 +3,6 @@ const qs = require('qs');
 const request = require('request');
 const fs = require('fs');
 const path = require('path');
-const urls = require('../garmin/Urls');
 
 const asJson = (body) => {
     try {
@@ -36,12 +35,10 @@ class CFClient {
         this.cookies._jar = deserialized;
     }
 
-    async scraper(options, domain) {
-        const newOptions = Object.create(options);
-        newOptions.uri = urls.convertUrl(domain, options.uri);
+    async scraper(options) {
         return new Promise((resolve) => {
             this.cloudscraper(
-                newOptions,
+                options,
                 (err, res) => {
                     resolve(res);
                 },
@@ -83,7 +80,7 @@ class CFClient {
         });
     }
 
-    async get(url, domain, data) {
+    async get(url, data) {
         const queryData = this.queryString.stringify(data);
         const queryDataString = queryData ? `?${queryData}` : '';
         const options = {
@@ -92,7 +89,7 @@ class CFClient {
             uri: `${url}${queryDataString}`,
             headers: this.headers,
         };
-        const { body } = await this.scraper(options, domain);
+        const { body } = await this.scraper(options);
         return asJson(body);
     }
 
@@ -104,11 +101,11 @@ class CFClient {
             formData: data,
             headers: this.headers,
         };
-        const { body } = await this.scraper(options, domain);
+        const { body } = await this.scraper(options);
         return asJson(body);
     }
 
-    async postJson(url, domain, data, params, headers) {
+    async postJson(url, data, params, headers) {
         const options = {
             method: 'POST',
             uri: url,
@@ -120,7 +117,7 @@ class CFClient {
                 'Content-Type': 'application/json',
             },
         };
-        const { body } = await this.scraper(options, domain);
+        const { body } = await this.scraper(options);
         return asJson(body);
     }
 
@@ -135,7 +132,7 @@ class CFClient {
                 'Content-Type': 'application/json',
             },
         };
-        const { body } = await this.scraper(options, domain);
+        const { body } = await this.scraper(options);
         return asJson(body);
     }
 }

@@ -3,6 +3,7 @@ const qs = require('qs');
 const request = require('request');
 const fs = require('fs');
 const path = require('path');
+const axios = require('axios');
 
 const asJson = (body) => {
     try {
@@ -19,7 +20,6 @@ class CFClient {
         this.queryString = qs;
         this.cookies = request.jar();
         this.headers = headers || {};
-        this.userAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36';
     }
 
     serializeCookies() {

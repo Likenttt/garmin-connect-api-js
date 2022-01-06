@@ -12,6 +12,7 @@ const CFClient = require('../common/CFClient');
 const { Running } = require('./workouts');
 const { toDateString } = require('../common/DateUtils');
 const urls = require('./Urls');
+const RegexUtils = require('./RegexUtils');
 
 const {
     username: configUsername,
@@ -19,27 +20,25 @@ const {
     domain: configDomain,
 } = config;
 
-const credentials = {
-    username: configUsername,
-    password: configPassword,
-    domain: configDomain,
-    embed: 'false',
-};
-
+const defaultUserAgent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36';
 class GarminConnect {
-    constructor(domain = 'com') {
+    /**
+     * @param domain The top domain of GC_MODERN,
+     * only com(For the global, default) and cn(For China Mainland) are allowed
+     * @param userAgent
+     */
+    constructor(domain = 'com', userAgent = defaultUserAgent) {
         if (domain && !['com', 'cn'].includes(domain)) {
             throw new Error('Only com and cn are valid for the parameter domain');
         }
-        this.domain = domain;
+        this.domain = configDomain || domain;
         const headers = {
+            'User-Agent': userAgent,
             origin: urls.convertUrl(this.domain, urls.GARMIN_SSO_ORIGIN),
             nk: 'NT',
         };
         this.client = new CFClient(headers);
         this.userHash = undefined;
-        this.domain = 'com';
-        this.csrf = '';
     }
 
     get sessionJson() {
@@ -58,31 +57,39 @@ class GarminConnect {
         }
     }
 
+    credentials() {
+        return {
+            username: configUsername,
+            password: configPassword,
+            domain: configDomain,
+            embed: 'false',
+            _csrf: this.getCsrfToken(),
+        };
+    }
+
     /**
      * Login to Garmin Connect
      * @param username
      * @param password
-     * @param domain The top domain of GC_MODERN,
-     * only com(For the global, default) and cn(For China Mainland) are allowed
      * @returns {Promise<*>}
      */
-    async login(username, password, domain = 'com') {
-        if (domain && !['com', 'cn'].includes(domain)) {
-            throw new Error('Only com and cn are valid for the parameter domain');
-        }
-        this.domain = domain;
-        let tempCredentials = { ...credentials, rememberme: 'on' };
+    async login(username, password) {
+        const myCredentials = this.credentials();
+        let tempCredentials = { ...myCredentials, rememberme: 'on' };
         if (username && password) {
             tempCredentials = {
-                ...credentials, username, password, rememberme: 'on',
+                ...myCredentials, username, password, rememberme: 'on',
             };
         }
-        this.csrf = this.getCsrfToken();
         await this.get(urls.SIGNIN_URL);
-        await this.postSimple(urls.SIGNIN_URL, tempCredentials);
-        const userPreferences = await this.getUserInfo();
-        const { displayName } = userPreferences;
-        this.userHash = displayName;
+        const params = this.getAuthParams();
+        const response = await this.post(urls.SIGNIN_URL, tempCredentials, params, {});
+        const ticketUrl = RegexUtils.authTicketUrl(response);
+        await this.get(ticketUrl);
+        await this.get(urls.GC_MODERN);
+        // const userPreferences = await this.getUserInfo();
+        // const { displayName } = userPreferences;
+        // this.userHash = displayName;
         return this;
     }
 
@@ -97,14 +104,8 @@ class GarminConnect {
 
     async getCsrfToken() {
         const authResp = await this.get(urls.LOGIN_URL, this.getAuthParams());
-        if (authResp.status_code !== 200) {
-            throw Error(`Auth failure: could not load ${urls.convertUrl(this.domain, urls.LOGIN_URL)}`);
-        }
         const re = /<input type="hidden" name="_csrf" value="(\w+)"/;
         const csrfToken = authResp.content.match(re);
-        if (!csrfToken) {
-            throw Error(`Auth failure: no CSRF token in ${urls.convertUrl(this.domain, urls.LOGIN_URL)}`);
-        }
         return csrfToken[0];
     }
 

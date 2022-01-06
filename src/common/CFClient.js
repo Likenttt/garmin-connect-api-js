@@ -20,6 +20,7 @@ class CFClient {
         this.queryString = qs;
         this.cookies = request.jar();
         this.headers = headers || {};
+        this.userAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36';
     }
 
     serializeCookies() {
@@ -38,7 +39,6 @@ class CFClient {
     async scraper(options, domain) {
         const newOptions = Object.create(options);
         newOptions.uri = urls.convertUrl(domain, options.uri);
-        newOptions.headers.origin = urls.convertUrl(domain, newOptions.headers.origin);
         return new Promise((resolve) => {
             this.cloudscraper(
                 newOptions,

@@ -1,7 +1,4 @@
 const appRoot = require('app-root-path');
-const path = require('path');
-const FormData = require('form-data');
-const fs = require('fs');
 
 let config = {};
 try {
@@ -30,14 +27,19 @@ const credentials = {
 };
 
 class GarminConnect {
-    constructor() {
+    constructor(domain = 'com') {
+        if (domain && !['com', 'cn'].includes(domain)) {
+            throw new Error('Only com and cn are valid for the parameter domain');
+        }
+        this.domain = domain;
         const headers = {
-            origin: urls.GARMIN_SSO_ORIGIN,
+            origin: urls.convertUrl(this.domain, urls.GARMIN_SSO_ORIGIN),
             nk: 'NT',
         };
         this.client = new CFClient(headers);
         this.userHash = undefined;
         this.domain = 'com';
+        this.csrf = '';
     }
 
     get sessionJson() {
@@ -75,12 +77,35 @@ class GarminConnect {
                 ...credentials, username, password, rememberme: 'on',
             };
         }
+        this.csrf = this.getCsrfToken();
         await this.get(urls.SIGNIN_URL);
         await this.post(urls.SIGNIN_URL, tempCredentials);
         const userPreferences = await this.getUserInfo();
         const { displayName } = userPreferences;
         this.userHash = displayName;
         return this;
+    }
+
+    // A set of request query parameters that need to be present for Garmin to
+    // accept our login attempt.
+    getAuthParams() {
+        return {
+            service: urls.convertUrl(this.domain, urls.GC_MODERN),
+            gauthHost: urls.convertUrl(this.domain, urls.GARMIN_SSO),
+        };
+    }
+
+    async getCsrfToken() {
+        const authResp = await this.get(urls.LOGIN_URL, this.getAuthParams());
+        if (authResp.status_code !== 200) {
+            throw Error(`Auth failure: could not load ${urls.convertUrl(this.domain, urls.LOGIN_URL)}`);
+        }
+        const re = /<input type="hidden" name="_csrf" value="(\w+)"/;
+        const csrfToken = authResp.content.match(re);
+        if (!csrfToken) {
+            throw Error(`Auth failure: no CSRF token in ${urls.convertUrl(this.domain, urls.LOGIN_URL)}`);
+        }
+        return csrfToken[0];
     }
 
     // User info
@@ -358,7 +383,8 @@ class GarminConnect {
     }
 
     // General methods
-
+    // uri will be converted to the corresponding domain later.
+    // please ensure the domains in the data are converted
     async get(url, data) {
         return this.client.get(url, this.domain, data);
     }

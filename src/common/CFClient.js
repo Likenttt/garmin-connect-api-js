@@ -65,8 +65,8 @@ class CFClient {
             this.cloudscraper(
                 options,
                 async (err, response, body) => {
-                    const { headers } = response || {};
-                    const { 'content-disposition': contentDisposition } = headers || {};
+                    const {headers} = response || {};
+                    const {'content-disposition': contentDisposition} = headers || {};
                     const downloadDirNormalized = path.normalize(downloadDir);
                     if (contentDisposition) {
                         const defaultName = `garmin_connect_download_${Date.now()}`;
@@ -83,65 +83,55 @@ class CFClient {
     async get(url, data) {
         const queryData = this.queryString.stringify(data);
         const queryDataString = queryData ? `?${queryData}` : '';
-        const options = {
-            method: 'GET',
-            jar: this.cookies,
-            uri: `${url}${queryDataString}`,
-            headers: this.headers,
+        const requestHeaders = {
+            ...this.headers,
+            Cookie: this.cookies,
         };
-        const { body } = await this.scraper(options);
-        return asJson(body);
-    }
-
-    async post(url, domain, data) {
-        const options = {
-            method: 'POST',
-            uri: url,
-            jar: this.cookies,
-            formData: data,
-            headers: this.headers,
-        };
-        const { body } = await this.scraper(options);
-        return asJson(body);
+        const uri = `${url}${queryDataString}`;
+        const response = await axios.get(uri, {
+            headers: requestHeaders,
+        });
+        return response.data;
     }
 
     /**
      * @param url
-     * @param data
+     * @param postData
      * @param params are the URL parameters to be sent with the request
      * Must be a plain object or a URLSearchParams object
-     * @param headers
+     * @param additionalHeaders
      * @returns {Promise<void>}
      */
-    async postJson(url, data, params, headers) {
-        const options = {
-            method: 'POST',
-            uri: url,
-            jar: this.cookies,
-            json: data,
-            headers: {
-                ...this.headers,
-                ...headers,
-                'Content-Type': 'application/json',
-            },
+    async postJson(url, postData, params, additionalHeaders) {
+        const postHeaders = {
+            ...this.headers,
+            ...additionalHeaders,
+            'Content-Type': 'application/json',
+            Cookie: this.cookies,
         };
-        const { body } = await this.scraper(options);
-        return asJson(body);
+        const {
+            headers,
+            data,
+        } = await axios.post(url, postData, {
+            headers: postHeaders,
+            params,
+        })
+            .catch((err) => {
+                console.log(err);
+                throw Error(`Auth failure: failed to post ${url}`);
+            });
+        this.cookies = headers.cookies;
+        return data;
     }
 
-    async putJson(url, domain, data) {
-        const options = {
-            method: 'PUT',
-            uri: url,
-            jar: this.cookies,
-            json: data,
-            headers: {
-                ...this.headers,
-                'Content-Type': 'application/json',
-            },
+    async putJson(url, data) {
+        const putHeaders = {
+            ...this.headers,
+            'Content-Type': 'application/json',
+            Cookie: this.cookies,
         };
-        const { body } = await this.scraper(options);
-        return asJson(body);
+        const response = await axios.put(url, data, {headers: putHeaders});
+        return response.data;
     }
 }
 

@@ -1,4 +1,8 @@
-const cloudscraper = require('cloudscraper');
+const cloudscraper = require('cloudscraper').defaults({
+    agentOptions: {
+        ciphers: 'ECDHE-ECDSA-AES128-GCM-SHA256',
+    },
+});
 const qs = require('qs');
 const request = require('request');
 const fs = require('fs');
@@ -102,12 +106,12 @@ class CFClient {
      * @param additionalHeaders
      * @returns {Promise<void>}
      */
-    async postJson(url, postData, params, additionalHeaders) {
+    async postJson0(url, postData, params, additionalHeaders) {
         const postHeaders = {
             ...this.headers,
             ...additionalHeaders,
             'Content-Type': 'application/json',
-            Cookie: this.cookies,
+            // Cookie: this.cookies,
         };
         const {
             headers,
@@ -122,6 +126,38 @@ class CFClient {
             });
         this.cookies = headers.cookies;
         return data;
+        // const options = {
+        //     method: 'POST',
+        //     uri: url,
+        //     jar: this.cookies,
+        //     json: postData,
+        //     headers: {
+        //         ...this.headers,
+        //         ...additionalHeaders,
+        //         'Content-Type': 'application/json',
+        //     },
+        //     params,
+        // };
+        // const {body} = await this.scraper(options);
+        // return asJson(body);
+    }
+
+    async postJson(url, postData, params, additionalHeaders) {
+        const options = {
+            method: 'POST',
+            uri: url,
+            jar: this.cookies,
+            json: postData,
+            params,
+            headers: {
+                ...this.headers,
+                ...additionalHeaders,
+                'Content-Type': 'application/json',
+            },
+        };
+
+        const {body} = await this.scraper(options)
+        return asJson(body);
     }
 
     async putJson(url, data) {

@@ -1,13 +1,11 @@
-const cloudscraper = require('cloudscraper').defaults({
-    agentOptions: {
-        ciphers: 'ECDHE-ECDSA-AES128-GCM-SHA256',
-    },
-});
+const cloudscraper = require('cloudscraper');
 const qs = require('qs');
 const request = require('request');
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
+const { wrapper } = require('axios-cookiejar-support');
+const { CookieJar } = require('tough-cookie');
 
 const asJson = (body) => {
     try {
@@ -24,6 +22,10 @@ class CFClient {
         this.queryString = qs;
         this.cookies = request.jar();
         this.headers = headers || {};
+        this.jar = new CookieJar();
+        this.client = wrapper(axios.create({
+            jar: this.jar,
+        }));
     }
 
     serializeCookies() {
@@ -34,7 +36,7 @@ class CFClient {
     importCookies(cookies) {
         // eslint-disable-next-line no-underscore-dangle
         const deserialized = this.cookies._jar.constructor.deserializeSync(cookies);
-        this.cookies = request.jar();
+        this.cookies = { ...cookies };
         // eslint-disable-next-line no-underscore-dangle
         this.cookies._jar = deserialized;
     }
@@ -69,8 +71,8 @@ class CFClient {
             this.cloudscraper(
                 options,
                 async (err, response, body) => {
-                    const {headers} = response || {};
-                    const {'content-disposition': contentDisposition} = headers || {};
+                    const { headers } = response || {};
+                    const { 'content-disposition': contentDisposition } = headers || {};
                     const downloadDirNormalized = path.normalize(downloadDir);
                     if (contentDisposition) {
                         const defaultName = `garmin_connect_download_${Date.now()}`;
@@ -89,12 +91,13 @@ class CFClient {
         const queryDataString = queryData ? `?${queryData}` : '';
         const requestHeaders = {
             ...this.headers,
-            Cookie: this.cookies,
         };
         const uri = `${url}${queryDataString}`;
-        const response = await axios.get(uri, {
+        const response = await this.client.get(uri, {
             headers: requestHeaders,
+            withCredentials: true,
         });
+        this.cookies = response.headers['set-cookie'].join(';');
         return response.data;
     }
 
@@ -106,58 +109,25 @@ class CFClient {
      * @param additionalHeaders
      * @returns {Promise<void>}
      */
-    async postJson0(url, postData, params, additionalHeaders) {
+    async postJson(url, postData, params, additionalHeaders) {
         const postHeaders = {
             ...this.headers,
             ...additionalHeaders,
             'Content-Type': 'application/json',
-            // Cookie: this.cookies,
         };
         const {
-            headers,
             data,
-        } = await axios.post(url, postData, {
+            responseHeaders,
+        } = await this.client.post(url, postData, {
             headers: postHeaders,
             params,
+            withCredentials: true,
         })
             .catch((err) => {
                 console.log(err);
                 throw Error(`Auth failure: failed to post ${url}`);
             });
-        this.cookies = headers.cookies;
         return data;
-        // const options = {
-        //     method: 'POST',
-        //     uri: url,
-        //     jar: this.cookies,
-        //     json: postData,
-        //     headers: {
-        //         ...this.headers,
-        //         ...additionalHeaders,
-        //         'Content-Type': 'application/json',
-        //     },
-        //     params,
-        // };
-        // const {body} = await this.scraper(options);
-        // return asJson(body);
-    }
-
-    async postJson(url, postData, params, additionalHeaders) {
-        const options = {
-            method: 'POST',
-            uri: url,
-            jar: this.cookies,
-            json: postData,
-            params,
-            headers: {
-                ...this.headers,
-                ...additionalHeaders,
-                'Content-Type': 'application/json',
-            },
-        };
-
-        const {body} = await this.scraper(options)
-        return asJson(body);
     }
 
     async putJson(url, data) {
@@ -166,7 +136,7 @@ class CFClient {
             'Content-Type': 'application/json',
             Cookie: this.cookies,
         };
-        const response = await axios.put(url, data, {headers: putHeaders});
+        const response = await axios.put(url, data, { headers: putHeaders, withCredentials: true });
         return response.data;
     }
 }
